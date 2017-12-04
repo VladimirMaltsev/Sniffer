@@ -8,9 +8,10 @@
 #include <sys/ioctl.h>
 #include <errno.h>
 
-#include <linux/in.h>
 #include <linux/if_ether.h>
 #include <linux/if.h>
+
+#include <arpa/inet.h>
 
 
 int main(int argc, char **argv) {
@@ -20,14 +21,14 @@ int main(int argc, char **argv) {
     char buffer [65536];
     unsigned char *iphead, *ethhead;
 
-    if ((sock = socket(PF_PACKET, SOCK_PACKET, ETH_P_ALL)) < 0) {
+    if ((sock = socket(PF_PACKET, SOCK_PACKET, htons(ETH_P_ALL))) < 0) {
         perror ("socket error");
         exit (1);
     }
     
     //привязка сокета к устройству 
     if ((opt_sock = setsockopt(sock, SOL_SOCKET, 
-        SO_BINDTODEVICE, "eth0\x00", strlen("eth0\x00"+1))) < 0) {
+        SO_BINDTODEVICE, "eth0\x00", strlen("eth0\x00"+1))) != -1) {
             perror ("Couldn`t bind the socket to the device");
             close(sock);
             exit (1);
@@ -45,7 +46,7 @@ int main(int argc, char **argv) {
 
         if (n < 42) {
             perror ("recvfrom(): incomplete packet");
-            //interface.ifr_flags ~= IFF_PROMISC;
+            //interface.ifr_flags &= ~IFF_PROMISC;
             //ioctl (sock, SIOCSIFFLAGS, &interface);
             close (sock);
             exit (0);
